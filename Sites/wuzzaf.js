@@ -31,10 +31,25 @@ const jobDetails = (jobUrl) => {
     request(jobUrl, (error, response, body) => {
         if (error && response.statusCode != 200) return console.error(error);
         var $ = cheerio.load(body);
-        // console.log(jobUrl);
+        // basics 
         let title = $("h1.job-title").find('meta').attr("content");
-        console.log($("span.job-company-location").find('span[addressRegion]').text());
+        let company_location = $("span.job-company-location").find("span[itemprop='addressRegion']").text();
+        let company_name = $("a.job-company-name").text();
+        let datePosted = $("time[itemprop='datePosted']").attr("title");
+        let applicants_num = $('div.applicants-num').text().trim() || "0";
+        //more details
+        let demands = Object.create(null);
+        $(".table").find('dl').each((index, element) => {
+            let key = $(element).find("dt").text().trim().replace(":", '');
+            let value = $(element).find("dd").text().trim().replace(/(\r\n\t|\n|\r\t|\s{5,}|\\)/gm, " ");
+            demands[key] = value;
+        })
+        let desc = $("span[itemprop='description']").text();
+        let requirements = $("span[itemprop='responsibilities']").text();
 
+        console.log(applicants_num);
+
+        console.log("==========================");
 
     })
 }
