@@ -8,12 +8,12 @@ let uri = `https://wuzzuf.net/jobs/p/146930-Back-End-Developer-Node-js-Python---
 // })
 
 // full page
-let pageUri = `https://wuzzuf.net/search/jobs`
-wuzzaf.fetchPage(pageUri, (job) => {
-    console.log('------');
-})
+// let pageUri = `https://wuzzuf.net/search/jobs`
+// wuzzaf.fetchPage(pageUri, (job) => {
+//     console.log('------');
+// })
 
 // all page s 
 wuzzaf.fetchAll(false,(job)=>{
-    console.log(job.title);
+    console.log(job.datePosted);
 })
