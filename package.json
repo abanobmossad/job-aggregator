@@ -1,18 +1,29 @@
 {
-  "name": "job-aggregation-service",
+  "name": "job-aggregator",
   "version": "1.0.0",
-  "description": "job aggregation for all i known websites ",
+  "description": "job aggregator for all i known websites ",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "Test"
   },
   "keywords": [
     "aggregation",
-    "jobs"
+    "jobs",
+    "scraping"
   ],
   "author": "Abanob Mossad",
   "license": "ISC",
   "dependencies": {
-    "request": "^2.88.0"
-  }
+    "request": "^2.88.0",
+    "cheerio" :"^1.0.0-rc.2"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abanobmossad/job-aggregation-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abanobmossad/job-aggregation-service/issues"
+  },
+  "homepage": "https://github.com/abanobmossad/job-aggregation-service#readme"
 }
