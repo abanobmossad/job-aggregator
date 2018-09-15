@@ -3,18 +3,15 @@ const cheerio = require("cheerio");
 
 
 /**
- * @description fesh all the job links single page
- * @param start :number the start page (pagination)
- * @param last :boolean fetch the last 24 hours jobs
- * @callback :function return the number of found opened jobs
+ * @description fetch all the job links in single page
+ * @param pageUri: the jobs page uri
+ * @callback :Save return the found jobs one by one 
  */
 // request the wuzzaf site and scribing it 
-async function jobInfo(start, last, callback) {
-    let url = !last ? `https://wuzzuf.net/search/jobs?start=${start}` :
-        `https://wuzzuf.net/search/jobs?start=${start}&filters%5Bpost_date%5D%5B0%5D=Past%2024%20Hours`;
+async function fetchPage(pageUri, save, callback) {
 
     var options = {
-        uri: url,
+        uri: pageUri,
         transform: function (body) {
             return cheerio.load(body); // to scrap the page (like JQuery)
         }
@@ -24,26 +21,26 @@ async function jobInfo(start, last, callback) {
         var no_of_jobs = $('p.no-of-jobs').text();
         //job details list
         $('h2.job-title').find('a').each((index, element) => {
-            let jobUrl = $(element).attr("href");
+            let jobUri = $(element).attr("href");
             // redirect to job details page and fetch data
-            jobDetails(encodeURI(jobUrl));// encode the Arabic characters
+            fetchJob(encodeURI(jobUri), save); // encode the Arabic characters
         });
-        callback(no_of_jobs)
+        try {
+            callback(no_of_jobs)
+        } catch (e) {}
     }).catch(err => {
         console.log(err);
     });
 }
 
-
 /**
  * @description fetch the job details (single job)
- * @param jobUrl :string the url (slug) of the job
+ * @param jobUri :string the url (slug) of the job
+ * @callback save : return the found job 
  */
-// fetch data from job details page
-const jobDetails = (jobUrl) => {
-
+function fetchJob(jobUri, save) {
     var options = {
-        uri: jobUrl,
+        uri: jobUri,
         transform: function (body) {
             return cheerio.load(body);
         }
@@ -66,10 +63,10 @@ const jobDetails = (jobUrl) => {
         job.demands = demands;
         job.desc = $("span[itemprop='description']").text();
         job.requirements = $("span[itemprop='responsibilities']").text();
-        console.log(job.title);
-        console.log("---------------------------------------------");
+        // console.log(job.title);
+        // console.log("---------------------------------------------");
         // save the job in the DataBase 
-
+        save(job)
     }).catch(err => {
         console.log(err);
     });
@@ -78,11 +75,15 @@ const jobDetails = (jobUrl) => {
 /**
  * @description run the script to scraping all site pages 
  * @param last :boolean fetch the last 24 hours jobs
+ * @callback return the found jobs one by one 
  */
-function fillJobs(last) {
+function fetchAll(last, save) {
+    let url;
     var counter = 0;
-    var clear = setInterval(function () {
-        jobInfo(counter, last, (noj) => {
+    let clear = setInterval(function () {
+        url = !last ? `https://wuzzuf.net/search/jobs?start=${counter}` :
+            `https://wuzzuf.net/search/jobs?start=${counter}&filters%5Bpost_date%5D%5B0%5D=Past%2024%20Hours`;
+        fetchPage(url, save, (noj) => {
             if (!noj) {
                 clearInterval(clear)
             }
@@ -91,6 +92,8 @@ function fillJobs(last) {
     }, 1000);
 }
 
-fillJobs(true)
-
-module.exports.fillJobs;
+module.exports = {
+    fetchAll,
+    fetchJob,
+    fetchPage
+}
