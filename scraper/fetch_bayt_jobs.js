@@ -18,20 +18,18 @@ async function fetchPage(pageUri, save, callback) {
     request(options).then(function ($) {
         // number of all opened jobs
         var no_of_jobs = $('p.no-of-jobs').text();
-        console.log(this.response.headers)
-
         //job details list
         $("a[data-js-aid='jobID']").each((index, element) => {
             let jobUri = `https://www.bayt.com` + $(element).attr("href");
             // redirect to job details page and fetch data
-            fetchJob(encodeURI(jobUri), save); // encode the Arabic characters
+            fetchJob(jobUri, save); // encode the Arabic characters
         });
 
         try {
             callback(no_of_jobs)
         } catch (e) {}
     }).catch(err => {
-        console.log("Too Many requests -429");
+        console.error("Bayt servers can't handel this  Many requests -429 just skip it :)");
     });
 }
 
@@ -42,7 +40,7 @@ async function fetchPage(pageUri, save, callback) {
  */
 function fetchJob(jobUri, save) {
     var options = {
-        uri: jobUri,
+        uri: encodeURI(jobUri),
         transform: function (body) {
             return cheerio.load(body);
         }
@@ -71,7 +69,7 @@ function fetchJob(jobUri, save) {
         // save the job in the DataBase 
         save(job)
     }).catch(err => {
-        console.log("Too Many requests -429");
+        console.error("Bayt servers can't handel this  Many requests -429 just skip it :)");
     });
 }
 

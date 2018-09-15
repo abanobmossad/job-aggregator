@@ -11,7 +11,7 @@ const cheerio = require("cheerio");
 async function fetchPage(pageUri, save, callback) {
 
     var options = {
-        uri: pageUri,
+        uri: encodeURI(pageUri),
         transform: function (body) {
             return cheerio.load(body); // to scrap the page (like JQuery)
         }
@@ -23,7 +23,7 @@ async function fetchPage(pageUri, save, callback) {
         $('h2.job-title').find('a').each((index, element) => {
             let jobUri = $(element).attr("href");
             // redirect to job details page and fetch data
-            fetchJob(encodeURI(jobUri), save); // encode the Arabic characters
+            fetchJob(jobUri, save); // encode the Arabic characters
         });
         try {
             callback(no_of_jobs)
@@ -40,7 +40,7 @@ async function fetchPage(pageUri, save, callback) {
  */
 function fetchJob(jobUri, save) {
     var options = {
-        uri: jobUri,
+        uri: encodeURI(jobUri),
         transform: function (body) {
             return cheerio.load(body);
         }
