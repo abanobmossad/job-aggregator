@@ -4,12 +4,11 @@ const cheerio = require("cheerio");
 /**
  * @description fetch all the job links in single page
  * @param pageUri: the jobs page uri
- * @callback :Save return the found jobs one by one 
+ * @callback return the found jobs one by one 
  */
-// request the wuzzaf site and scribing it 
-async function fetchPage(pageUri, save, callback) {
+async function fetchPage(pageUri, callback, checker) {
     var options = {
-        uri: pageUri,
+        uri: encodeURI(pageUri),
         transform: function (body) {
             return cheerio.load(body); // to scrap the page (like JQuery)
         },
@@ -17,16 +16,19 @@ async function fetchPage(pageUri, save, callback) {
     };
     request(options).then(function ($) {
         // number of all opened jobs
-        var no_of_jobs = $('p.no-of-jobs').text();
+        var no_of_jobs = $('#jsMainListingContainer').find('.row').find('.col').find('.t-mute').text();
+        let expr = no_of_jobs.match(/\b\d+\b/gm)
+        let done = expr[0] == expr[2] ? true : false;
+
         //job details list
         $("a[data-js-aid='jobID']").each((index, element) => {
             let jobUri = `https://www.bayt.com` + $(element).attr("href");
             // redirect to job details page and fetch data
-            fetchJob(jobUri, save); // encode the Arabic characters
+            fetchJob(jobUri, callback); // encode the Arabic characters
         });
 
         try {
-            callback(no_of_jobs)
+            checker(no_of_jobs, done)
         } catch (e) {}
     }).catch(err => {
         console.error("Bayt servers can't handel this  Many requests -429 just skip it :)");
@@ -36,9 +38,9 @@ async function fetchPage(pageUri, save, callback) {
 /**
  * @description fetch the job details (single job)
  * @param jobUri :string the url (slug) of the job
- * @callback save : return the found job 
+ * @callback return the found job 
  */
-function fetchJob(jobUri, save) {
+function fetchJob(jobUri, callback) {
     var options = {
         uri: encodeURI(jobUri),
         transform: function (body) {
@@ -67,7 +69,7 @@ function fetchJob(jobUri, save) {
         job.requirements = $(".card").find("div:nth-child(7)").find('h2').siblings().text().trim()
         job.originalLink = jobUri;
         // save the job in the DataBase 
-        save(job)
+        callback(job)
     }).catch(err => {
         console.error("Bayt servers can't handel this  Many requests -429 just skip it :)");
     });
@@ -78,14 +80,14 @@ function fetchJob(jobUri, save) {
  * @param last :boolean fetch the last 24 hours jobs
  * @callback return the found jobs one by one 
  */
-function fetchAll(last, save) {
+function fetchAll(last, callback) {
     let url;
     var counter = 0;
     let clear = setInterval(function () {
         url = !last ? `https://www.bayt.com/en/egypt/jobs/?page=${counter}` :
-            `https://www.bayt.com/en/egypt/jobs/?options%5Bjb_activation_date%5D%5B%5D=2&YII_CSRF_TOKEN=098921c77a0dd08abb34a221699329042a92971c&page=${counter}`
-        fetchPage(url, save, (noj) => {
-            if (!noj) {
+            decodeURIComponent(`https://www.bayt.com/en/egypt/jobs/?filters%5Bjb_last_modification_date_interval%5D%5B%5D=3&page=${counter}`)
+        fetchPage(url, callback, (noj, done) => {
+            if (done) {
                 clearInterval(clear)
             }
         })

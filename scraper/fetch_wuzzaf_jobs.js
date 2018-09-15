@@ -5,10 +5,9 @@ const cheerio = require("cheerio");
 /**
  * @description fetch all the job links in single page
  * @param pageUri: the jobs page uri
- * @callback :Save return the found jobs one by one 
+ * @callback return the found jobs one by one 
  */
-// request the wuzzaf site and scribing it 
-async function fetchPage(pageUri, save, callback) {
+async function fetchPage(pageUri, callback, checker) {
 
     var options = {
         uri: encodeURI(pageUri),
@@ -23,10 +22,10 @@ async function fetchPage(pageUri, save, callback) {
         $('h2.job-title').find('a').each((index, element) => {
             let jobUri = $(element).attr("href");
             // redirect to job details page and fetch data
-            fetchJob(jobUri, save); // encode the Arabic characters
+            fetchJob(jobUri, callback); // encode the Arabic characters
         });
         try {
-            callback(no_of_jobs)
+            checker(no_of_jobs)
         } catch (e) {}
     }).catch(err => {
         console.log(err);
@@ -36,9 +35,9 @@ async function fetchPage(pageUri, save, callback) {
 /**
  * @description fetch the job details (single job)
  * @param jobUri :string the url (slug) of the job
- * @callback save : return the found job 
+ * @callback return the found job 
  */
-function fetchJob(jobUri, save) {
+function fetchJob(jobUri, callback) {
     var options = {
         uri: encodeURI(jobUri),
         transform: function (body) {
@@ -64,10 +63,8 @@ function fetchJob(jobUri, save) {
         job.desc = $("span[itemprop='description']").text();
         job.requirements = $("span[itemprop='responsibilities']").text();
         job.originalLink=jobUri
-        // console.log(job.title);
-        // console.log("---------------------------------------------");
         // save the job in the DataBase 
-        save(job)
+        callback(job)
     }).catch(err => {
         console.log(err);
     });
@@ -78,13 +75,13 @@ function fetchJob(jobUri, save) {
  * @param last :boolean fetch the last 24 hours jobs
  * @callback return the found jobs one by one 
  */
-function fetchAll(last, save) {
+function fetchAll(last, callback) {
     let url;
     var counter = 0;
     let clear = setInterval(function () {
         url = !last ? `https://wuzzuf.net/search/jobs?start=${counter}` :
-            `https://wuzzuf.net/search/jobs?start=${counter}&filters%5Bpost_date%5D%5B0%5D=Past%2024%20Hours`;
-        fetchPage(url, save, (noj) => {
+            decodeURIComponent(`https://wuzzuf.net/search/jobs?start=${counter}&filters%5Bpost_date%5D%5B0%5D=Past%2024%20Hours`);
+        fetchPage(url, callback, (noj) => {
             if (!noj) {
                 clearInterval(clear)
             }
