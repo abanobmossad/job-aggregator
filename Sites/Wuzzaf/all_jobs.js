@@ -2,14 +2,21 @@ const request = require('request-promise');
 const cheerio = require("cheerio");
 
 
-
+/**
+ * @description fesh all the job links single page
+ * @param start :number the start page (pagination)
+ * @param last :boolean fetch the last 24 hours jobs
+ * @callback :function return the number of found opened jobs
+ */
 // request the wuzzaf site and scribing it 
-async function jobInfo(start, callback) {
+async function jobInfo(start, last, callback) {
+    let url = !last ? `https://wuzzuf.net/search/jobs?start=${start}` :
+        `https://wuzzuf.net/search/jobs?start=${start}&filters%5Bpost_date%5D%5B0%5D=Past%2024%20Hours`;
 
     var options = {
-        uri: `https://wuzzuf.net/search/jobs?start=${start}`,
+        uri: url,
         transform: function (body) {
-            return cheerio.load(body);
+            return cheerio.load(body); // to scrap the page (like JQuery)
         }
     };
     request(options).then(function ($) {
@@ -19,17 +26,19 @@ async function jobInfo(start, callback) {
         $('h2.job-title').find('a').each((index, element) => {
             let jobUrl = $(element).attr("href");
             // redirect to job details page and fetch data
-            jobDetails(encodeURI(jobUrl));
+            jobDetails(encodeURI(jobUrl));// encode the Arabic characters
         });
         callback(no_of_jobs)
     }).catch(err => {
         console.log(err);
-
     });
 }
 
 
-
+/**
+ * @description fetch the job details (single job)
+ * @param jobUrl :string the url (slug) of the job
+ */
 // fetch data from job details page
 const jobDetails = (jobUrl) => {
 
@@ -59,21 +68,29 @@ const jobDetails = (jobUrl) => {
         job.requirements = $("span[itemprop='responsibilities']").text();
         console.log(job.title);
         console.log("---------------------------------------------");
+        // save the job in the DataBase 
+
     }).catch(err => {
         console.log(err);
     });
 }
 
-function fillJobs() {
-    var counter = 1;
+/**
+ * @description run the script to scraping all site pages 
+ * @param last :boolean fetch the last 24 hours jobs
+ */
+function fillJobs(last) {
+    var counter = 0;
     var clear = setInterval(function () {
-        counter += 19;
-        jobInfo(counter, (noj) => {
+        jobInfo(counter, last, (noj) => {
             if (!noj) {
                 clearInterval(clear)
             }
         })
+        counter += 20;
     }, 1000);
 }
 
-fillJobs()
+fillJobs(true)
+
+module.exports.fillJobs;
