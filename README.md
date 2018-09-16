@@ -8,6 +8,9 @@
 [BAYT]: <https://www.bayt.com>
 
 ## Usage
+> clone it and use ```npm link```  to link the package 
+> and use ```npm link job-aggregator``` to use it in your project 
+
 **require the package** 
 
 ```const {wuzzaf,bayt} = require('job-aggregator')```
